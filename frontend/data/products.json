@@ -1,0 +1,222 @@
+[
+  {
+    "id": 1,
+    "title": "Cyberpunk 2077: Phantom Liberty",
+    "category": "RPG",
+    "platform": "Steam",
+    "price": 199.90,
+    "discountPrice": 99.90,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/library_600x900_2x.jpg",
+    "description": "Uma aventura de suspense e espionagem no perigoso distrito de Dogtown em Night City.",
+    "trailer": "sJbexcm4Trk"
+  },
+  {
+    "id": 2,
+    "title": "Elden Ring: Shadow of the Erdtree",
+    "category": "RPG",
+    "platform": "Steam",
+    "price": 249.90,
+    "discountPrice": 199.90,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/library_600x900_2x.jpg",
+    "description": "Explore a Terra das Sombras e enfrente novos chefes desafiadores com poderes prístinos.",
+    "trailer": "M-Xh4vbs6go"
+  },
+  {
+    "id": 3,
+    "title": "EA SPORTS FC 25",
+    "category": "Esportes",
+    "platform": "EA App",
+    "price": 359.00,
+    "discountPrice": 215.40,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2195250/library_600x900_2x.jpg",
+    "description": "A experiência definitiva de futebol virtual com novas táticas com tecnologia FC IQ.",
+    "trailer": "RefXbk1_taI"
+  },
+  {
+    "id": 4,
+    "title": "Grand Theft Auto V",
+    "category": "Ação",
+    "platform": "Epic Games",
+    "price": 99.90,
+    "discountPrice": 49.95,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/271590/library_600x900_2x.jpg",
+    "description": "Inclui a experiência completa do modo história de GTA V e acesso ao GTA Online.",
+    "trailer": "N-xHcvug3WI"
+  },
+  {
+    "id": 5,
+    "title": "Counter-Strike 2 (Status Prime)",
+    "category": "FPS",
+    "platform": "Steam",
+    "price": 75.00,
+    "discountPrice": 75.00,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/730/library_600x900_2x.jpg",
+    "description": "Garante partidas competitivas exclusivas com usuários Prime e direito a drops de itens semanais.",
+    "trailer": "nSE38xjMLqE"
+  },
+  {
+    "id": 6,
+    "title": "Resident Evil 4 Remake",
+    "category": "Terror",
+    "platform": "Steam",
+    "price": 199.00,
+    "discountPrice": 129.35,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2050650/library_600x900_2x.jpg",
+    "description": "Sobrevivência redefinida na missão de Leon S. Kennedy para resgatar a filha do presidente.",
+    "trailer": "pQsyi4j1RqM"
+  },
+  {
+    "id": 7,
+    "title": "Forza Horizon 5",
+    "category": "Esportes",
+    "platform": "Xbox / PC",
+    "price": 249.00,
+    "discountPrice": 124.50,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/1551360/library_600x900_2x.jpg",
+    "description": "Lidere expedições num mundo aberto vibrante e em constante evolução nas paisagens do México.",
+    "trailer": "Rv7xLt5yNsM"
+  },
+  {
+    "id": 8,
+    "title": "DOOM Eternal",
+    "category": "FPS",
+    "platform": "Steam",
+    "price": 149.00,
+    "discountPrice": 37.25,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/782330/library_600x900_2x.jpg",
+    "description": "Os exércitos do inferno invadiram a Terra. Torne-se o Slayer para conquistar demônios em todas as dimensões.",
+    "trailer": "_J2YcaVqjCQ"
+  },
+  {
+    "id": 9,
+    "title": "The Witcher 3: Wild Hunt",
+    "category": "RPG",
+    "platform": "Steam",
+    "price": 150.00,
+    "discountPrice": 44.85,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/292030/library_600x900_2x.jpg",
+    "description": "Viva uma história épica de caçador de monstros num mundo aberto repleto de decisões impactantes.",
+    "trailer": "XHrskkHf958"
+  },
+  {
+    "id": 10,
+    "title": "Red Dead Redemption 2",
+    "category": "Ação",
+    "platform": "Steam",
+    "price": 249.00,
+    "discountPrice": 124.50,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/library_600x900_2x.jpg",
+    "description": "A jornada épica de Arthur Morgan e da gangue Van der Linde pelo coração da América.",
+    "trailer": "F63h3v9QV7w"
+  },
+  {
+    "id": 11,
+    "title": "Baldur's Gate 3",
+    "category": "RPG",
+    "platform": "Steam",
+    "price": 249.00,
+    "discountPrice": 211.65,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/library_600x900_2x.jpg",
+    "description": "Um RPG de fantasia aclamado, inspirado em Dungeons & Dragons, com escolhas que mudam o mundo.",
+    "trailer": "XuCfkgaaa08"
+  },
+  {
+    "id": 12,
+    "title": "Hogwarts Legacy",
+    "category": "Ação",
+    "platform": "Steam",
+    "price": 299.90,
+    "discountPrice": 149.95,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/990080/library_600x900_2x.jpg",
+    "description": "Viva como estudante em Hogwarts explorando locais inéditos do mundo bruxo no século XIX.",
+    "trailer": "BtyBjOW8sGY"
+  },
+  {
+    "id": 13,
+    "title": "God of War",
+    "category": "Ação",
+    "platform": "Steam",
+    "price": 249.90,
+    "discountPrice": 124.95,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/1593500/library_600x900_2x.jpg",
+    "description": "Kratos e Atreus partem numa jornada perigosa pelos reinos nórdicos em busca de respostas.",
+    "trailer": "RQK_40a0XUY"
+  },
+  {
+    "id": 14,
+    "title": "God of War Ragnarök",
+    "category": "Ação",
+    "platform": "Steam",
+    "price": 299.90,
+    "discountPrice": 239.92,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2322010/library_600x900_2x.jpg",
+    "description": "O fim dos dias se aproxima. Kratos e Atreus lutam para sobreviver ao Ragnarök iminente.",
+    "trailer": "Dc5xOGS1oJ0"
+  },
+  {
+    "id": 15,
+    "title": "The Last of Us Part I",
+    "category": "Terror",
+    "platform": "Steam",
+    "price": 249.00,
+    "discountPrice": 149.40,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/1888930/library_600x900_2x.jpg",
+    "description": "Joel e Ellie atravessam um país devastado por uma pandemia numa história emocionante de sobrevivência.",
+    "trailer": "LW5NwaUXgIA"
+  },
+  {
+    "id": 16,
+    "title": "Dead by Daylight",
+    "category": "Terror",
+    "platform": "Steam",
+    "price": 89.90,
+    "discountPrice": 26.97,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/381210/library_600x900_2x.jpg",
+    "description": "Um jogo multiplayer de terror assimétrico entre assassinos implacáveis e quatro sobreviventes.",
+    "trailer": "JGhIXLO3ul8"
+  },
+  {
+    "id": 17,
+    "title": "Dark Souls III",
+    "category": "RPG",
+    "platform": "Steam",
+    "price": 199.00,
+    "discountPrice": 59.70,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/374320/library_600x900_2x.jpg",
+    "description": "Enfrente desafios brutais e chefes lendários no desfecho da icônica série de ação e RPG.",
+    "trailer": "iHoebaVyqSM"
+  },
+  {
+    "id": 18,
+    "title": "Sekiro: Shadows Die Twice",
+    "category": "Ação",
+    "platform": "Steam",
+    "price": 249.00,
+    "discountPrice": 99.60,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/814380/library_600x900_2x.jpg",
+    "description": "Ressuscite para vingar-se em combates de espadas precisos no Japão feudal devastado pela guerra.",
+    "trailer": "aUnEezrBFoA"
+  },
+  {
+    "id": 19,
+    "title": "Ghost of Tsushima",
+    "category": "Ação",
+    "platform": "Steam",
+    "price": 249.90,
+    "discountPrice": 174.93,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2215430/library_600x900_2x.jpg",
+    "description": "Jin Sakai luta para libertar a ilha de Tsushima da invasão mongol num mundo aberto deslumbrante.",
+    "trailer": "0HTfLqHoTmg"
+  },
+  {
+    "id": 20,
+    "title": "EA SPORTS FC 24",
+    "category": "Esportes",
+    "platform": "EA App",
+    "price": 299.00,
+    "discountPrice": 209.30,
+    "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2195250/library_600x900_2x.jpg",
+    "description": "A nova era do futebol virtual com HypermotionV e as maiores ligas e clubes do mundo.",
+    "trailer": "XhP3Xh4LMA8"
+  }
+]

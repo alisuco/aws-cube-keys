@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cube Keys | Como Fiz</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-container">
+      <div class="logo">
+        <h1>Cube <span>Keys</span></h1>
+      </div>
+      <nav>
+        <a href="../index.html">Home</a>
+        <a href="carrinho.html">Carrinho (<span id="cart-count">0</span>)</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page-content">
+    <section class="video-section">
+      <h2 class="page-title">Bastidores do Projeto: Cube Keys</h2>
+      <p class="section-desc">
+        Confira no vídeo abaixo a explicação completa sobre a arquitetura do projeto, separação de catálogo em JSON, mapeamento de infraestrutura na AWS e auditoria de performance no Lighthouse.
+      </p>
+
+      <div class="video-wrapper">
+        <video controls preload="metadata" style="width: 100%; display: block; border-radius: 8px;">
+          <source src="../assets/video/video-explicativo.mp4" type="video/mp4">
+          Seu navegador não suporta a exibição deste vídeo.
+        </video>
+      </div>
+
+      <div class="topics-card">
+        <h3>Resumo dos Tópicos Explicados no Vídeo:</h3>
+        <ul>
+          <li>✔ <strong>Estrutura & Organização:</strong> Divisão semântica em páginas HTML, folha de estilo CSS e lógica JS em arquivos modularizados.</li>
+          <li>✔ <strong>Headless Commerce:</strong> Separação total entre a vitrine e o catálogo de dados (<code>products.json</code> via <code>fetch</code>).</li>
+          <li>✔ <strong>Carrinho & Estado Persistido:</strong> Navegação entre telas mantendo o carrinho ativo via <code>localStorage</code>.</li>
+          <li>✔ <strong>Infraestrutura AWS & Edge:</strong> Mapeamento com Amazon S3 + CloudFront (CDN) e estratégias de Cache.</li>
+          <li>✔ <strong>Métricas do Lighthouse:</strong> Análise ao vivo da performance, acessibilidade e plano de melhorias.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 Cube Keys — Projeto para o Bootcamp AI/R</p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

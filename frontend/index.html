@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cube Keys | Home - Vitrine de Jogos</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+ <header class="header">
+  <div class="container header-container">
+    <div class="logo">
+      <h1>Cube <span>Keys</span></h1>
+    </div>
+    <nav>
+      <a href="index.html" class="active">Home</a>
+      <a href="pages/carrinho.html">Carrinho (<span id="cart-count">0</span>)</a>
+      <a href="pages/como-fiz.html">Como Fiz</a>
+    </nav>
+  </div>
+</header>
+
+  <main class="container">
+    <section class="controls-section">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Buscar jogo por nome...">
+      </div>
+      
+      <div class="filter-box">
+        <select id="category-filter">
+          <option value="todos">Todas as Categorias</option>
+          <option value="RPG">RPG</option>
+          <option value="Esportes">Esportes</option>
+          <option value="Ação">Ação</option>
+          <option value="FPS">FPS</option>
+          <option value="Terror">Terror</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="products-section">
+      <div id="products-grid" class="products-grid">
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 Cube Keys — Projeto para o Bootcamp AI/R</p>
+    </div>
+  </footer>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
