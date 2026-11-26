@@ -8,6 +8,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as apigwv2integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import * as events from 'aws-cdk-lib/aws-events';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 
@@ -109,6 +110,46 @@ export class InfraStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'ProductsApiUrl', {
       value: `${httpApi.apiEndpoint}/api/products`,
       description: 'URL da API de produtos (teste direto ate a Etapa 6)',
+    });
+
+    // ----- Etapa 4: pedidos -----
+    const ordersTable = new dynamodb.TableV2(this, 'OrdersTable', {
+      partitionKey: { name: 'orderId', type: dynamodb.AttributeType.STRING },
+      billing: dynamodb.Billing.onDemand(),
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const ordersFn = new lambda.Function(this, 'OrdersFunction', {
+      runtime: lambda.Runtime.NODEJS_24_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'lambdas', 'orders')),
+      environment: {
+        ORDERS_TABLE: ordersTable.tableName,
+        PRODUCTS_TABLE: productsTable.tableName,
+        EVENT_BUS_NAME: 'default',
+      },
+      timeout: cdk.Duration.seconds(10),
+    });
+    ordersTable.grantReadWriteData(ordersFn);
+    productsTable.grantReadData(ordersFn);
+
+    const eventBus = events.EventBus.fromEventBusName(this, 'DefaultEventBus', 'default');
+    eventBus.grantPutEventsTo(ordersFn);
+
+    const ordersIntegration = new apigwv2integrations.HttpLambdaIntegration(
+      'OrdersIntegration',
+      ordersFn,
+      { scopePermissionToRoute: false },
+    );
+    httpApi.addRoutes({
+      path: '/api/orders',
+      methods: [apigwv2.HttpMethod.POST],
+      integration: ordersIntegration,
+    });
+    httpApi.addRoutes({
+      path: '/api/orders/{orderId}',
+      methods: [apigwv2.HttpMethod.GET],
+      integration: ordersIntegration,
     });
   }
 }

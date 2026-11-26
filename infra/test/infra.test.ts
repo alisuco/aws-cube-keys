@@ -46,7 +46,7 @@ describe('InfraStack — catalogo', () => {
   const template = Template.fromStack(stack);
 
   test('cria a tabela Products com id numerico como chave', () => {
-    template.resourceCountIs('AWS::DynamoDB::GlobalTable', 1);
+    template.resourceCountIs('AWS::DynamoDB::GlobalTable', 2);
     template.hasResourceProperties('AWS::DynamoDB::GlobalTable', {
       BillingMode: 'PAY_PER_REQUEST',
       AttributeDefinitions: [{ AttributeName: 'id', AttributeType: 'N' }],
@@ -80,6 +80,43 @@ describe('InfraStack — catalogo', () => {
     template.hasOutput('ProductsApiUrl', {
       Value: Match.anyValue(),
       Description: 'URL da API de produtos (teste direto ate a Etapa 6)',
+    });
+  });
+});
+
+describe('InfraStack — pedidos', () => {
+  const app = new cdk.App();
+  const stack = new InfraStack(app, 'OrdersTestStack');
+  const template = Template.fromStack(stack);
+
+  test('cria a tabela Orders com orderId como chave', () => {
+    template.hasResourceProperties('AWS::DynamoDB::GlobalTable', {
+      AttributeDefinitions: [{ AttributeName: 'orderId', AttributeType: 'S' }],
+      KeySchema: [{ AttributeName: 'orderId', KeyType: 'HASH' }],
+      BillingMode: 'PAY_PER_REQUEST',
+    });
+  });
+
+  test('registra as rotas de criacao e consulta de pedidos', () => {
+    template.resourcePropertiesCountIs(
+      'AWS::ApiGatewayV2::Route',
+      { RouteKey: 'POST /api/orders' },
+      1,
+    );
+    template.resourcePropertiesCountIs(
+      'AWS::ApiGatewayV2::Route',
+      { RouteKey: 'GET /api/orders/{orderId}' },
+      1,
+    );
+  });
+
+  test('concede permissao para publicar no EventBridge', () => {
+    template.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: Match.objectLike({
+        Statement: Match.arrayWith([
+          Match.objectLike({ Action: 'events:PutEvents' }),
+        ]),
+      }),
     });
   });
 });
