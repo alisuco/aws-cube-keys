@@ -2,7 +2,7 @@
 
 Documento de apoio para acompanhar o progresso. Ele não altera o projeto por si só.
 
-Progresso: Etapas 1 a 4 concluídas; próxima: Etapa 5.
+Progresso: Etapas 1 a 5 concluídas; próxima: Etapa 6.
 
 ## Regra de trabalho
 - Nenhum arquivo é alterado e nenhum deploy é feito sem sua autorização explícita.
@@ -80,10 +80,12 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
 - Nota: sem a Etapa 5 não há consumidor do evento, então o pedido permanece `PENDING` — comportamento esperado nesta etapa.
 - Deploy: separado, só com autorização.
 
-### Etapa 5 — Processador de eventos
+### Etapa 5 — Processador de eventos (concluída)
 - Objetivo: fechar o fluxo assíncrono orientado a eventos.
-- Mudanças previstas: regra EventBridge -> Lambda Processor, geração de chaves, atualização do pedido para `COMPLETED` e envio via SES.
-- Verificação: repetir o `POST` e acompanhar o `GET` até `COMPLETED`, conferindo `items[].key`.
+- Mudanças realizadas: regra `OrderCreatedRule` (source `cube.orders`, detail-type `OrderCreated`) -> Lambda `ProcessorFunction` (`infra/lib/lambdas/processor/`). O handler gera chaves `XXXXX-XXXXX-XXXXX`, atualiza o pedido para `COMPLETED` e envia por SES **somente se** `CUBE_SENDER_EMAIL` estiver definido. As chaves são gravadas no DynamoDB antes do e-mail, para que o `GET` já as devolva mesmo se o SES falhar. `retryAttempts: 2` na regra.
+- Verificação: `npm run build`, `npm test` (12 testes passando) e `npx cdk synth` (regra com `detail-type`, permissão `ses:SendEmail`). Após deploy: repetir o `POST` e acompanhar o `GET` até `COMPLETED`, conferindo `items[].key`.
+- Nota: se não houver remetente verificado no SES (conta em sandbox), basta não definir `CUBE_SENDER_EMAIL`; o envio é desativado e as chaves ficam disponíveis na API.
+- Deploy: separado, só com autorização.
 
 ### Etapa 6 — Integração total no CloudFront
 - Objetivo: garantir que o front e a API funcionem sob a mesma URL pública.
@@ -103,4 +105,4 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
 - [ ] Links acessíveis e checkout validado na URL informada.
 
 ## Próximo passo sugerido
-Etapa 5 — Processador de eventos: regra EventBridge -> Lambda Processor, geração de chaves, atualização para `COMPLETED` e envio por SES. Ainda sem deploy.
+Etapa 6 — Integração total no CloudFront: adicionar o behavior `/api/*` apontando para o API Gateway e validar front + API na mesma URL. Ainda sem deploy.
