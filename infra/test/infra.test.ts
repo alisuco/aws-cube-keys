@@ -145,3 +145,22 @@ describe('InfraStack — processador', () => {
     });
   });
 });
+
+describe('InfraStack — integracao CloudFront', () => {
+  const app = new cdk.App();
+  const stack = new InfraStack(app, 'IntegrationTestStack');
+  const template = Template.fromStack(stack);
+
+  test('encaminha /api/* para a API com todos os metodos', () => {
+    template.hasResourceProperties('AWS::CloudFront::Distribution', {
+      DistributionConfig: Match.objectLike({
+        CacheBehaviors: Match.arrayWith([
+          Match.objectLike({
+            PathPattern: '/api/*',
+            AllowedMethods: Match.arrayWith(['POST']),
+          }),
+        ]),
+      }),
+    });
+  });
+});

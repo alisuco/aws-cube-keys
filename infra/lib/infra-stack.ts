@@ -181,5 +181,16 @@ export class InfraStack extends cdk.Stack {
       },
       targets: [new targets.LambdaFunction(processorFn, { retryAttempts: 2 })],
     });
+
+    // ----- Etapa 6: front e API na mesma origem -----
+    // apiEndpoint vem como https://xxx.execute-api...; HttpOrigin quer o dominio.
+    const apiDomain = cdk.Fn.select(2, cdk.Fn.split('/', httpApi.apiEndpoint));
+    distribution.addBehavior('/api/*', new origins.HttpOrigin(apiDomain), {
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      originRequestPolicy:
+        cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    });
   }
 }
