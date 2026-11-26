@@ -2,7 +2,7 @@
 
 Documento de apoio para acompanhar o progresso. Ele não altera o projeto por si só.
 
-Progresso: Etapas 1 a 3 concluídas; próxima: Etapa 4.
+Progresso: Etapas 1 a 4 concluídas; próxima: Etapa 5.
 
 ## Regra de trabalho
 - Nenhum arquivo é alterado e nenhum deploy é feito sem sua autorização explícita.
@@ -73,10 +73,12 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
 - Verificação: `npm run build`, `npm test` (7 testes passando) e `npx cdk synth` (tabela `AWS::DynamoDB::GlobalTable`, `AWS::ApiGatewayV2::Api` com 2 rotas, Output `ProductsApiUrl`). Após deploy: validar com `Invoke-RestMethod https://<api-url>/api/products`.
 - Deploy: separado, só com autorização.
 
-### Etapa 4 — Pedidos
+### Etapa 4 — Pedidos (concluída)
 - Objetivo: criar a tabela `Orders`, implementar `POST /api/orders` e `GET /api/orders/{id}`.
-- Mudanças previstas: Lambda de pedidos gravando `PENDING`, calculando preços no servidor e publicando evento; leitura de status por `orderId`.
-- Verificação: `POST` de teste com `items: [1]`, depois `GET /api/orders/{orderId}` conferindo `PENDING`.
+- Mudanças realizadas: `TableV2` `Orders` (chave `orderId` string/UUID), Lambda `OrdersFunction` (`infra/lib/lambdas/orders/`), rotas `POST /api/orders` e `GET /api/orders/{orderId}`. O `POST` valida os IDs, busca preços na tabela `Products` (`discountPrice || price`), grava `PENDING` com `ConditionExpression` e publica `OrderCreated` no barramento padrão do EventBridge. O `GET` devolve o pedido completo para o polling do front.
+- Verificação: `npm run build`, `npm test` (10 testes passando) e `npx cdk synth` (4 rotas no API Gateway, 2 tabelas, permissão `events:PutEvents`). Após deploy: `POST` com `items: [1]` e `GET` conferindo `PENDING`.
+- Nota: sem a Etapa 5 não há consumidor do evento, então o pedido permanece `PENDING` — comportamento esperado nesta etapa.
+- Deploy: separado, só com autorização.
 
 ### Etapa 5 — Processador de eventos
 - Objetivo: fechar o fluxo assíncrono orientado a eventos.
@@ -101,4 +103,4 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
 - [ ] Links acessíveis e checkout validado na URL informada.
 
 ## Próximo passo sugerido
-Etapa 4 — Pedidos: tabela `Orders`, `POST /api/orders` gravando `PENDING` com preços buscados no servidor e publicando evento, além de `GET /api/orders/{orderId}`. Depende da sua autorização antes de qualquer alteração.
+Etapa 5 — Processador de eventos: regra EventBridge -> Lambda Processor, geração de chaves, atualização para `COMPLETED` e envio por SES. Ainda sem deploy.
