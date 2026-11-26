@@ -48,8 +48,12 @@ exports.handler = async (event) => {
       TableName: ORDERS_TABLE,
       Key: { orderId },
       UpdateExpression:
-        'SET #status = :status, items = :items, updatedAt = :updatedAt',
-      ExpressionAttributeNames: { '#status': 'status' },
+        'SET #status = :status, #items = :items, updatedAt = :updatedAt',
+      ExpressionAttributeNames: {
+        '#status': 'status',
+        // "items" e palavra reservada do DynamoDB.
+        '#items': 'items',
+      },
       ExpressionAttributeValues: {
         ':status': 'COMPLETED',
         ':items': items,
