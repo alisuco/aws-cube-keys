@@ -2,7 +2,7 @@
 
 Documento de apoio para acompanhar o progresso. Ele não altera o projeto por si só.
 
-Progresso: Etapas 1 a 6 concluídas; próxima: Etapa 7 (deploy).
+Progresso: implementação concluída (Etapas 1 a 6, com a hospedagem migrada para GitHub Pages); próxima: Etapa 7 (deploy).
 
 ## Regra de trabalho
 - Nenhum arquivo é alterado e nenhum deploy é feito sem sua autorização explícita.
@@ -11,99 +11,91 @@ Progresso: Etapas 1 a 6 concluídas; próxima: Etapa 7 (deploy).
 - `npx cdk deploy` só depois de pedir autorização específica, porque muda uma conta AWS real.
 
 ## Contexto atual (verificado)
-- `frontend/` é estático, sem build, sem gerenciador de pacotes.
-- `infra/` é o único projeto npm (AWS CDK em TypeScript) e a stack ainda está vazia.
-- `frontend/assets/js/app.js` já consome `GET /api/products`, `GET /api/products/:id`, `POST /api/orders` e `GET /api/orders/:id`.
+- `frontend/` é estático, sem build, sem gerenciador de pacotes; será publicado no GitHub Pages.
+- `infra/` é o único projeto npm (AWS CDK em TypeScript).
+- `frontend/assets/js/app.js` consome `GET /api/products`, `GET /api/products/:id`, `POST /api/orders` e `GET /api/orders/:id`, montando a URL a partir de `frontend/assets/js/config.js`.
 - O carrinho fica em `localStorage['cube_keys_cart']`; o checkout envia só IDs de produtos e espera que o servidor calcule preços e chaves.
-- `frontend/data/products.json` (20 produtos) é publicado no S3 e lido pela Lambda de seed para popular a tabela `Products`; o `app.js` não lê mais esse arquivo diretamente.
-- `frontend/assets/video/video-explicativo.mp4` (~36 MB) está excluído do asset publicado, por decisão do usuário; o `BucketDeployment` usa `exclude: ['assets/video/**']`.
-- O `README.md` da raiz descreve a arquitetura-alvo; ainda não há backend, URL pública nem deploy.
+- `frontend/data/products.json` (20 produtos) é lido no `cdk synth` e passado ao `CustomResource` de seed, que grava no DynamoDB.
+- `frontend/assets/video/video-explicativo.mp4` (~36 MB) **está no repositório** desde o primeiro commit. Com GitHub Pages, ele fica acessível publicamente em `assets/video/video-explicativo.mp4`; decidir removê-lo ainda está em aberto.
+- O deploy inicial com CloudFront/OAC falhou: uma SCP da Organizations (`p-cwpx03lm`) nega `cloudfront:CreateOriginAccessControl`. A migração para GitHub Pages removeu S3/CloudFront/OAC do stack, contornando esse bloqueio. O stack em `ROLLBACK_COMPLETE` precisa ser excluído antes de um novo deploy.
 
 ## Arquitetura alvo
 
 ```text
 Navegador
    |
-CloudFront (URL pública)
-   ├── /         -> S3 privado via OAC (frontend/)
-   └── /api/*    -> API Gateway HTTP
-                      ├── GET  /api/products
-                      ├── GET  /api/products/{id}
-                      ├── POST /api/orders
-                      └── GET  /api/orders/{id}
-                               |
-                          Lambdas
-                               |
-                     DynamoDB Products / Orders
+GitHub Pages (alisuco.github.io/aws-cube-keys)
+   |  CORS: GET, POST, content-type
+   v
+API Gateway HTTP
+   ├── GET  /api/products
+   ├── GET  /api/products/{id}
+   ├── POST /api/orders
+   └── GET  /api/orders/{orderId}
+            |
+       Lambdas
+            |
+    DynamoDB Products / Orders
 
-POST /api/orders -> grava PENDING -> publica evento no EventBridge
-EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
+POST /api/orders -> grava PENDING -> publica OrderCreated no EventBridge
+EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES (opcional)
 ```
 
 ## Decisões padrão (sujeitas à sua revisão)
-- API Gateway HTTP, não REST API; `/api` fica na mesma origem do CloudFront, então CORS não é necessário.
+- Front no **GitHub Pages**; URL pública: `https://alisuco.github.io/aws-cube-keys/`.
+- A URL da API fica em `frontend/assets/js/config.js` (`window.CUBE_API_BASE_URL`) e é pública por natureza — não é segredo.
+- Como são origens diferentes, o HTTP API habilita **CORS** para `https://alisuco.github.io`.
+- API Gateway HTTP, não REST API.
 - EventBridge acionando a Lambda Processor para o fluxo orientado a eventos.
-- Seed automático de produtos no deploy, reaproveitando `frontend/data/products.json`.
-- Sem domínio customizado: usar o domínio `.cloudfront.net` como URL pública.
-- SES com e-mail verificado; se não houver e-mail verificado no sandbox, desativar o envio real e deixar as chaves disponíveis no `GET /api/orders/:id`.
-- Não pretendo alterar `app.js`; mudanças ficam em `infra/` e documentação, salvo necessidade de ajuste de caminho.
+- Seed automático de produtos no deploy, reaproveitando `frontend/data/products.json` embutido no template.
+- SES com e-mail verificado; se não houver remetente verificado no sandbox, desativar o envio real e deixar as chaves disponíveis no `GET /api/orders/{orderId}`.
+- Sem CloudFront, S3, OAC, domínio customizado nem behavior `/api/*`.
 
 ## Etapas
 
 ### Etapa 0 — Revisão do plano (concluída)
 - Nenhuma alteração.
-- Você revisa este `PLANO.md` e confirma os defaults ou pede ajustes.
 
 ### Etapa 1 — README + diagrama (concluída)
-- Objetivo: transformar as decisões acima em documentação legível para o entregável final.
-- Mudanças realizadas: `README.md` preenchido com diagrama Mermaid e `PLANO.md` atualizado.
-- Verificação: leitura final; nenhum comando obrigatório.
+- Objetivo: transformar as decisões em documentação legível para o entregável final.
+- Mudanças: `README.md` preenchido com diagrama Mermaid e `PLANO.md` atualizado.
 
-### Etapa 2 — CDK base: S3 + CloudFront (concluída)
-- Objetivo: publicar o `frontend/` e gerar a URL pública.
-- Mudanças realizadas: `infra/lib/infra-stack.ts` agora cria um bucket S3 privado (`BLOCK_ALL`, SSE-S3), faz o upload do `frontend/` com `BucketDeployment` (sem o vídeo), cria o OAC via `S3BucketOrigin.withOriginAccessControl()` e a `Distribution` com `defaultRootObject: 'index.html'` e redirect para HTTPS. O `Output` `CloudFrontUrl` expõe a URL.
-- Testes: `infra/test/infra.test.ts` trocou o placeholder SQS por 3 assertions reais (bucket privado, OAC + distribution, Output da URL).
-- Verificação: `npm run build`, `npm test` (3 testes passando) e `npx cdk synth` (template com S3, OAC, CloudFront e Output). O asset synthetizado contém 8 arquivos do front e nenhum vídeo.
-- Deploy: separado, só com autorização.
+### Etapa 2 — CDK base: S3 + CloudFront (substituída)
+- Foi implementada com bucket privado, `BucketDeployment`, OAC e Distribution.
+- O deploy falhou por SCP explícita negando `cloudfront:CreateOriginAccessControl`.
+- Com a migração para GitHub Pages, S3/CloudFront/OAC foram **removidos do stack**. Esta etapa não se aplica mais.
 
-### Etapa 3 — Catálogo (concluída)
+### Etapa 3 — Catálogo (concluída e ajustada)
 - Objetivo: criar a tabela `Products`, semear com `products.json` e expor as rotas de leitura.
-- Mudanças realizadas: `TableV2` `Products` (chave `id` numérica, on-demand), Lambda `ProductsFunction` (handlers em `infra/lib/lambdas/products/`), HTTP API com `GET /api/products` e `GET /api/products/{id}` (uniform resource path, prefixo `/api` já incluído para o CloudFront da Etapa 6), e seed via `cr.Provider` + `CustomResource` cujo handler (`infra/lib/lambdas/seed/`) lê `data/products.json` do bucket e faz `BatchWriteItem`. O seed depende do `BucketDeployment`.
-- Exceções de `.gitignore`: `infra/lib/lambdas/**/*.js` (raiz e `infra/`) para versionar os handlers JS.
-- Verificação: `npm run build`, `npm test` (7 testes passando) e `npx cdk synth` (tabela `AWS::DynamoDB::GlobalTable`, `AWS::ApiGatewayV2::Api` com 2 rotas, Output `ProductsApiUrl`). Após deploy: validar com `Invoke-RestMethod https://<api-url>/api/products`.
-- Deploy: separado, só com autorização.
+- Mudanças: `TableV2` `Products` (chave `id` numérica, on-demand), Lambda `ProductsFunction` (`infra/lib/lambdas/products/`) e rotas `GET /api/products` e `GET /api/products/{id}`.
+- Ajuste após a migração: o seed (`infra/lib/lambdas/seed/`) não lê mais do S3 — recebe os 20 produtos via `ResourceProperties.Products`, lidos do JSON no `cdk synth`.
+- Exceções de `.gitignore`: `infra/lib/lambdas/**/*.js` para versionar os handlers JS.
 
 ### Etapa 4 — Pedidos (concluída)
 - Objetivo: criar a tabela `Orders`, implementar `POST /api/orders` e `GET /api/orders/{id}`.
-- Mudanças realizadas: `TableV2` `Orders` (chave `orderId` string/UUID), Lambda `OrdersFunction` (`infra/lib/lambdas/orders/`), rotas `POST /api/orders` e `GET /api/orders/{orderId}`. O `POST` valida os IDs, busca preços na tabela `Products` (`discountPrice || price`), grava `PENDING` com `ConditionExpression` e publica `OrderCreated` no barramento padrão do EventBridge. O `GET` devolve o pedido completo para o polling do front.
-- Verificação: `npm run build`, `npm test` (10 testes passando) e `npx cdk synth` (4 rotas no API Gateway, 2 tabelas, permissão `events:PutEvents`). Após deploy: `POST` com `items: [1]` e `GET` conferindo `PENDING`.
-- Nota: sem a Etapa 5 não há consumidor do evento, então o pedido permanece `PENDING` — comportamento esperado nesta etapa.
-- Deploy: separado, só com autorização.
+- Mudanças: `TableV2` `Orders` (chave `orderId` string/UUID), Lambda `OrdersFunction` (`infra/lib/lambdas/orders/`), rotas `POST /api/orders` e `GET /api/orders/{orderId}`. O `POST` valida IDs, busca preços no DynamoDB (`discountPrice || price`), grava `PENDING` com `ConditionExpression` e publica `OrderCreated` no barramento padrão.
 
 ### Etapa 5 — Processador de eventos (concluída)
 - Objetivo: fechar o fluxo assíncrono orientado a eventos.
-- Mudanças realizadas: regra `OrderCreatedRule` (source `cube.orders`, detail-type `OrderCreated`) -> Lambda `ProcessorFunction` (`infra/lib/lambdas/processor/`). O handler gera chaves `XXXXX-XXXXX-XXXXX`, atualiza o pedido para `COMPLETED` e envia por SES **somente se** `CUBE_SENDER_EMAIL` estiver definido. As chaves são gravadas no DynamoDB antes do e-mail, para que o `GET` já as devolva mesmo se o SES falhar. `retryAttempts: 2` na regra.
-- Verificação: `npm run build`, `npm test` (12 testes passando) e `npx cdk synth` (regra com `detail-type`, permissão `ses:SendEmail`). Após deploy: repetir o `POST` e acompanhar o `GET` até `COMPLETED`, conferindo `items[].key`.
-- Nota: se não houver remetente verificado no SES (conta em sandbox), basta não definir `CUBE_SENDER_EMAIL`; o envio é desativado e as chaves ficam disponíveis na API.
-- Deploy: separado, só com autorização.
+- Mudanças: regra `OrderCreatedRule` (source `cube.orders`, detail-type `OrderCreated`) -> Lambda `ProcessorFunction` (`infra/lib/lambdas/processor/`). Gera chaves `XXXXX-XXXXX-XXXXX`, atualiza o pedido para `COMPLETED` e envia por SES somente se `CUBE_SENDER_EMAIL` estiver definido. As chaves são gravadas antes do e-mail, para o `GET` já devolvê-las se o SES falhar.
 
-### Etapa 6 — Integração total no CloudFront (concluída)
-- Objetivo: garantir que o front e a API funcionem sob a mesma URL pública.
-- Mudanças realizadas: `distribution.addBehavior('/api/*', ...)` com `HttpOrigin` a partir de `httpApi.apiEndpoint`, `AllowedMethods.ALLOW_ALL` (necessário para o `POST`), `CachePolicy.CACHING_DISABLED` e `OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER`. Como as rotas da API já usam o prefixo `/api`, o caminho chega intacto ao API Gateway.
-- Verificação: `npm run build`, `npm test` (13 testes passando) e `npx cdk synth` (CacheBehaviors com `PathPattern: /api/*`, 7 métodos, cache policy `CachingDisabled`). Após deploy: abrir a URL pública, navegar pelo catálogo, adicionar ao carrinho e finalizar checkout.
-- Deploy: separado, só com autorização.
+### Etapa 6 — Integração front/API (substituída)
+- Antes: behavior `/api/*` no CloudFront com mesma origem.
+- Agora: CORS no HTTP API para o domínio do GitHub Pages e URL da API configurada em `frontend/assets/js/config.js`.
 
-### Etapa 7 — Deploy e validação final
-- Objetivo: publicar a versão final e conferir os quatro entregáveis.
+### Etapa 7 — Deploy e validação final (pendente)
+- Objetivo: publicar a versão final e conferir os entregáveis.
+- Pré-deploy: excluir o stack falho em `ROLLBACK_COMPLETE` (`aws cloudformation delete-stack --stack-name InfraStack`).
 - Comandos: `npm run build`, `npm test`, `npx cdk synth`, `npx cdk diff`, `npx cdk deploy` (com autorização).
-- Verificação final: URL abre, catálogo carrega, pedido completa, chaves aparecem, README e diagrama fazem sentido.
+- Pós-deploy: copiar o domínio do Output `ProductsApiUrl` para `frontend/assets/js/config.js`, commitar e publicar `frontend/` no GitHub Pages.
+- Verificação final: URL do Pages abre, catálogo carrega, pedido completa, chaves aparecem, README e diagrama fazem sentido.
 
 ## Checklist final do desafio
-- [ ] Repositório GitHub com o código-fonte.
+- [x] Repositório GitHub com o código-fonte.
 - [ ] URL pública da loja funcionando.
 - [ ] Diagrama de arquitetura claro.
 - [ ] README com compreensão do projeto, arquitetura e instruções de execução/implantação.
 - [ ] Links acessíveis e checkout validado na URL informada.
 
 ## Próximo passo sugerido
-Etapa 7 — Deploy e validação final: `npm run build`, `npm test`, `npx cdk synth`, `npx cdk diff` e, **somente com autorização explícita**, `npx cdk deploy`. Depois validar a URL pública, o catálogo, o checkout e as chaves.
+Etapa 7: apagar o stack em `ROLLBACK_COMPLETE`, rodar o deploy (com autorização explícita), preencher `frontend/assets/js/config.js` com a URL do API Gateway e publicar o `frontend/` no GitHub Pages.
