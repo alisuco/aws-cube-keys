@@ -2,7 +2,7 @@
 
 Documento de apoio para acompanhar o progresso. Ele não altera o projeto por si só.
 
-Progresso: Etapa 1 concluída; próxima: Etapa 2.
+Progresso: Etapas 1 e 2 concluídas; próxima: Etapa 3.
 
 ## Regra de trabalho
 - Nenhum arquivo é alterado e nenhum deploy é feito sem sua autorização explícita.
@@ -16,6 +16,7 @@ Progresso: Etapa 1 concluída; próxima: Etapa 2.
 - `frontend/assets/js/app.js` já consome `GET /api/products`, `GET /api/products/:id`, `POST /api/orders` e `GET /api/orders/:id`.
 - O carrinho fica em `localStorage['cube_keys_cart']`; o checkout envia só IDs de produtos e espera que o servidor calcule preços e chaves.
 - `frontend/data/products.json` existe, mas hoje não é buscado pelo `app.js`; servirá como semente do catálogo.
+- `frontend/assets/video/video-explicativo.mp4` (~36 MB) está excluído do asset publicado, por decisão do usuário; o `BucketDeployment` usa `exclude: ['assets/video/**']`.
 - O `README.md` da raiz descreve a arquitetura-alvo; ainda não há backend, URL pública nem deploy.
 
 ## Arquitetura alvo
@@ -58,10 +59,11 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
 - Mudanças realizadas: `README.md` preenchido com diagrama Mermaid e `PLANO.md` atualizado.
 - Verificação: leitura final; nenhum comando obrigatório.
 
-### Etapa 2 — CDK base: S3 + CloudFront
+### Etapa 2 — CDK base: S3 + CloudFront (concluída)
 - Objetivo: publicar o `frontend/` e gerar a URL pública.
-- Mudanças previstas: `infra/lib/infra-stack.ts`, possivelmente novos arquivos em `infra/lib/constructs/`.
-- Verificação: `npm run build`, `npx cdk synth` e conferência dos recursos `AWS::S3::Bucket`, `AWS::CloudFront::Distribution` e do `Output` da URL.
+- Mudanças realizadas: `infra/lib/infra-stack.ts` agora cria um bucket S3 privado (`BLOCK_ALL`, SSE-S3), faz o upload do `frontend/` com `BucketDeployment` (sem o vídeo), cria o OAC via `S3BucketOrigin.withOriginAccessControl()` e a `Distribution` com `defaultRootObject: 'index.html'` e redirect para HTTPS. O `Output` `CloudFrontUrl` expõe a URL.
+- Testes: `infra/test/infra.test.ts` trocou o placeholder SQS por 3 assertions reais (bucket privado, OAC + distribution, Output da URL).
+- Verificação: `npm run build`, `npm test` (3 testes passando) e `npx cdk synth` (template com S3, OAC, CloudFront e Output). O asset synthetizado contém 8 arquivos do front e nenhum vídeo.
 - Deploy: separado, só com autorização.
 
 ### Etapa 3 — Catálogo
@@ -97,4 +99,4 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
 - [ ] Links acessíveis e checkout validado na URL informada.
 
 ## Próximo passo sugerido
-Etapa 2 — CDK base: S3 + CloudFront. Ainda depende da sua autorização antes de qualquer alteração.
+Etapa 3 — Catálogo: tabela `Products`, seed a partir de `frontend/data/products.json` e rotas `GET /api/products` e `GET /api/products/{id}`. Depende da sua autorização antes de qualquer alteração.
