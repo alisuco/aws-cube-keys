@@ -2,7 +2,7 @@
 
 Documento de apoio para acompanhar o progresso. Ele não altera o projeto por si só.
 
-Progresso: Etapas 1 e 2 concluídas; próxima: Etapa 3.
+Progresso: Etapas 1 a 3 concluídas; próxima: Etapa 4.
 
 ## Regra de trabalho
 - Nenhum arquivo é alterado e nenhum deploy é feito sem sua autorização explícita.
@@ -15,7 +15,7 @@ Progresso: Etapas 1 e 2 concluídas; próxima: Etapa 3.
 - `infra/` é o único projeto npm (AWS CDK em TypeScript) e a stack ainda está vazia.
 - `frontend/assets/js/app.js` já consome `GET /api/products`, `GET /api/products/:id`, `POST /api/orders` e `GET /api/orders/:id`.
 - O carrinho fica em `localStorage['cube_keys_cart']`; o checkout envia só IDs de produtos e espera que o servidor calcule preços e chaves.
-- `frontend/data/products.json` existe, mas hoje não é buscado pelo `app.js`; servirá como semente do catálogo.
+- `frontend/data/products.json` (20 produtos) é publicado no S3 e lido pela Lambda de seed para popular a tabela `Products`; o `app.js` não lê mais esse arquivo diretamente.
 - `frontend/assets/video/video-explicativo.mp4` (~36 MB) está excluído do asset publicado, por decisão do usuário; o `BucketDeployment` usa `exclude: ['assets/video/**']`.
 - O `README.md` da raiz descreve a arquitetura-alvo; ainda não há backend, URL pública nem deploy.
 
@@ -66,10 +66,12 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
 - Verificação: `npm run build`, `npm test` (3 testes passando) e `npx cdk synth` (template com S3, OAC, CloudFront e Output). O asset synthetizado contém 8 arquivos do front e nenhum vídeo.
 - Deploy: separado, só com autorização.
 
-### Etapa 3 — Catálogo
+### Etapa 3 — Catálogo (concluída)
 - Objetivo: criar a tabela `Products`, semear com `products.json` e expor as rotas de leitura.
-- Mudanças previstas: tabela DynamoDB, Lambda de seed via custom resource, Lambda de produtos e rotas `GET /api/products` e `GET /api/products/{id}`.
-- Verificação: `npm run build`, `npm test`, `npx cdk synth` e, após deploy, `Invoke-RestMethod https://<url>/api/products`.
+- Mudanças realizadas: `TableV2` `Products` (chave `id` numérica, on-demand), Lambda `ProductsFunction` (handlers em `infra/lib/lambdas/products/`), HTTP API com `GET /api/products` e `GET /api/products/{id}` (uniform resource path, prefixo `/api` já incluído para o CloudFront da Etapa 6), e seed via `cr.Provider` + `CustomResource` cujo handler (`infra/lib/lambdas/seed/`) lê `data/products.json` do bucket e faz `BatchWriteItem`. O seed depende do `BucketDeployment`.
+- Exceções de `.gitignore`: `infra/lib/lambdas/**/*.js` (raiz e `infra/`) para versionar os handlers JS.
+- Verificação: `npm run build`, `npm test` (7 testes passando) e `npx cdk synth` (tabela `AWS::DynamoDB::GlobalTable`, `AWS::ApiGatewayV2::Api` com 2 rotas, Output `ProductsApiUrl`). Após deploy: validar com `Invoke-RestMethod https://<api-url>/api/products`.
+- Deploy: separado, só com autorização.
 
 ### Etapa 4 — Pedidos
 - Objetivo: criar a tabela `Orders`, implementar `POST /api/orders` e `GET /api/orders/{id}`.
@@ -99,4 +101,4 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
 - [ ] Links acessíveis e checkout validado na URL informada.
 
 ## Próximo passo sugerido
-Etapa 3 — Catálogo: tabela `Products`, seed a partir de `frontend/data/products.json` e rotas `GET /api/products` e `GET /api/products/{id}`. Depende da sua autorização antes de qualquer alteração.
+Etapa 4 — Pedidos: tabela `Orders`, `POST /api/orders` gravando `PENDING` com preços buscados no servidor e publicando evento, além de `GET /api/orders/{orderId}`. Depende da sua autorização antes de qualquer alteração.
