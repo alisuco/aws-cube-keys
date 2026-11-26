@@ -2,7 +2,7 @@
 
 Documento de apoio para acompanhar o progresso. Ele não altera o projeto por si só.
 
-Progresso: Etapas 1 a 6 concluídas; Etapa 7 em andamento — deploy AWS concluído, faltam o redeploy do fix do processador e a publicação no GitHub Pages.
+Progresso: Etapas 1 a 7 concluídas. Deploy AWS e publicação no GitHub Pages finalizados; checkout validado de ponta a ponta com chaves geradas.
 
 ## Regra de trabalho
 - Nenhum arquivo é alterado e nenhum deploy é feito sem sua autorização explícita.
@@ -84,23 +84,22 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES (opcion
 - Antes: behavior `/api/*` no CloudFront com mesma origem.
 - Agora: CORS no HTTP API para o domínio do GitHub Pages e URL da API configurada em `frontend/assets/js/config.js`.
 
-### Etapa 7 — Deploy e validação final (em andamento)
+### Etapa 7 — Deploy e validação final (concluída)
 - Objetivo: publicar a versão final e conferir os entregáveis.
 - Comandos executados: `npm run build`, `npm test`, `npx cdk synth`, `npx cdk diff`, `npx cdk deploy` (pelo usuario, no terminal dele).
 - Resultado verificado: stack `CREATE_COMPLETE`, 37 recursos, 20 produtos no DynamoDB, rotas da API respondendo e CORS correto para o GitHub Pages.
 - Correção aplicada após o segundo deploy: o `CustomResource` do CloudFormation entrega propriedades como string, então `Products` agora é enviado como `JSON.stringify(products)` e o handler converte `id` com `Number()` antes do `BatchWriteItem`. Isso evita `ValidationException: The provided key element does not match the schema` na tabela com chave numérica.
-- Correção aplicada após a verificação do deploy: `items` é palavra reservada do DynamoDB e o `UpdateCommand` do processor falhava com `Invalid UpdateExpression`. O atributo agora usa o alias `#items` (commit `742f96d`). Falta o redeploy dessa correcao.
+- Correção aplicada após a verificação do deploy: `items` é palavra reservada do DynamoDB e o `UpdateCommand` do processor falhava com `Invalid UpdateExpression`. O atributo agora usa o alias `#items` (commit `742f96d`), aplicado com `npx cdk deploy` em 26/11 as 22:53.
 - `frontend/assets/js/config.js` preenchido com a URL do API Gateway.
-- Publicacao do front: workflow `.github/workflows/deploy-pages.yml` (Source do Pages = GitHub Actions).
+- Publicacao do front: workflow `.github/workflows/deploy-pages.yml` (Source do Pages = GitHub Actions), executado com sucesso no commit `36a3a3a`.
+- Validacao final: `npm run build`, `npm test` (10 testes), `npx cdk synth`, `npx cdk diff` (somente o codigo do ProcessorFunction) e `npx cdk deploy` (UPDATE_COMPLETE). Checkout de teste com `items: [1, 3]` chegou a `COMPLETED`, total R$ 315,30 e chaves `XXXXX-XXXXX-XXXXX` em `items[].key`.
 
 ## Checklist final do desafio
 - [x] Repositório GitHub com o código-fonte.
-- [ ] URL pública da loja funcionando (depende da configuracao do Pages e do push).
+- [x] URL pública da loja funcionando: `https://alisuco.github.io/aws-cube-keys/`.
 - [x] Diagrama de arquitetura claro.
 - [x] README com compreensão do projeto, arquitetura e instruções de execução/implantação.
-- [ ] Links acessíveis e checkout validado na URL informada (depende do redeploy do fix do processor).
+- [x] Links acessíveis e checkout validado na URL informada.
 
 ## Próximo passo sugerido
-1. Rodar `npx cdk deploy` novamente para aplicar o fix do processor.
-2. Em Settings -> Pages, definir Source = GitHub Actions e fazer push para `main` (ou disparar o workflow manualmente).
-3. Abrir `https://alisuco.github.io/aws-cube-keys/` e repetir um checkout; conferir `COMPLETED` e `items[].key`.
+Nenhum. Projeto concluído. Opcional: configurar remetente verificado no SES e definir `CUBE_SENDER_EMAIL` para habilitar o envio das chaves por e-mail (hoje desativado; as chaves ja estao disponiveis na API).

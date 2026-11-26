@@ -2,7 +2,7 @@
 
 Loja headless de chaves de jogos. O **front é estático no GitHub Pages** e o **backend é serverless na AWS**, com catálogo e pedidos no DynamoDB, processamento assíncrono orientado a eventos e infraestrutura definida em AWS CDK.
 
-> Status: Etapas 1 a 6 implementadas. O deploy (Etapa 7) ainda não foi feito. Progresso detalhado em [`PLANO.md`](PLANO.md).
+> Status: Etapas 1 a 7 concluídas. Loja publicada em `https://alisuco.github.io/aws-cube-keys/` com backend serverless implantado na AWS. Progresso detalhado em [`PLANO.md`](PLANO.md).
 
 ## Arquitetura
 
