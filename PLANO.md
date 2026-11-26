@@ -2,7 +2,7 @@
 
 Documento de apoio para acompanhar o progresso. Ele não altera o projeto por si só.
 
-Progresso: Etapas 1 a 5 concluídas; próxima: Etapa 6.
+Progresso: Etapas 1 a 6 concluídas; próxima: Etapa 7 (deploy).
 
 ## Regra de trabalho
 - Nenhum arquivo é alterado e nenhum deploy é feito sem sua autorização explícita.
@@ -87,10 +87,11 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
 - Nota: se não houver remetente verificado no SES (conta em sandbox), basta não definir `CUBE_SENDER_EMAIL`; o envio é desativado e as chaves ficam disponíveis na API.
 - Deploy: separado, só com autorização.
 
-### Etapa 6 — Integração total no CloudFront
+### Etapa 6 — Integração total no CloudFront (concluída)
 - Objetivo: garantir que o front e a API funcionem sob a mesma URL pública.
-- Mudanças previstas: behavior `/api/*` no CloudFront apontando para o API Gateway.
-- Verificação: abrir a URL pública, navegar pelo catálogo, adicionar ao carrinho e finalizar checkout.
+- Mudanças realizadas: `distribution.addBehavior('/api/*', ...)` com `HttpOrigin` a partir de `httpApi.apiEndpoint`, `AllowedMethods.ALLOW_ALL` (necessário para o `POST`), `CachePolicy.CACHING_DISABLED` e `OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER`. Como as rotas da API já usam o prefixo `/api`, o caminho chega intacto ao API Gateway.
+- Verificação: `npm run build`, `npm test` (13 testes passando) e `npx cdk synth` (CacheBehaviors com `PathPattern: /api/*`, 7 métodos, cache policy `CachingDisabled`). Após deploy: abrir a URL pública, navegar pelo catálogo, adicionar ao carrinho e finalizar checkout.
+- Deploy: separado, só com autorização.
 
 ### Etapa 7 — Deploy e validação final
 - Objetivo: publicar a versão final e conferir os quatro entregáveis.
@@ -105,4 +106,4 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES
 - [ ] Links acessíveis e checkout validado na URL informada.
 
 ## Próximo passo sugerido
-Etapa 6 — Integração total no CloudFront: adicionar o behavior `/api/*` apontando para o API Gateway e validar front + API na mesma URL. Ainda sem deploy.
+Etapa 7 — Deploy e validação final: `npm run build`, `npm test`, `npx cdk synth`, `npx cdk diff` e, **somente com autorização explícita**, `npx cdk deploy`. Depois validar a URL pública, o catálogo, o checkout e as chaves.
