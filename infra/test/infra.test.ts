@@ -39,3 +39,47 @@ describe('InfraStack — S3 + CloudFront', () => {
     });
   });
 });
+
+describe('InfraStack — catalogo', () => {
+  const app = new cdk.App();
+  const stack = new InfraStack(app, 'CatalogTestStack');
+  const template = Template.fromStack(stack);
+
+  test('cria a tabela Products com id numerico como chave', () => {
+    template.resourceCountIs('AWS::DynamoDB::GlobalTable', 1);
+    template.hasResourceProperties('AWS::DynamoDB::GlobalTable', {
+      BillingMode: 'PAY_PER_REQUEST',
+      AttributeDefinitions: [{ AttributeName: 'id', AttributeType: 'N' }],
+      KeySchema: [{ AttributeName: 'id', KeyType: 'HASH' }],
+    });
+  });
+
+  test('registra as duas rotas de leitura do catalogo', () => {
+    template.resourceCountIs('AWS::ApiGatewayV2::Api', 1);
+    template.resourcePropertiesCountIs(
+      'AWS::ApiGatewayV2::Route',
+      { RouteKey: 'GET /api/products' },
+      1,
+    );
+    template.resourcePropertiesCountIs(
+      'AWS::ApiGatewayV2::Route',
+      { RouteKey: 'GET /api/products/{id}' },
+      1,
+    );
+  });
+
+  test('semeia a tabela a partir do products.json do S3', () => {
+    template.hasResourceProperties('AWS::CloudFormation::CustomResource', {
+      BucketName: Match.anyValue(),
+      ObjectKey: 'data/products.json',
+      TableName: Match.anyValue(),
+    });
+  });
+
+  test('expõe a URL da API como Output', () => {
+    template.hasOutput('ProductsApiUrl', {
+      Value: Match.anyValue(),
+      Description: 'URL da API de produtos (teste direto ate a Etapa 6)',
+    });
+  });
+});
