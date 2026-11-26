@@ -1,13 +1,14 @@
 // =============================================================
 // Cube Keys — front-end da loja headless
-// Consome a API serverless (CloudFront → API Gateway → Lambda)
-// Todas as chamadas usam caminhos relativos: /api/...
+// Consome a API serverless (GitHub Pages → API Gateway → Lambda)
+// A URL da API vem de assets/js/config.js (CUBE_API_BASE_URL).
 // =============================================================
 
 // -------------------------------------------------------------
 // UTILITÁRIOS
 // -------------------------------------------------------------
 const CART_KEY = 'cube_keys_cart';
+const API_BASE_URL = (window.CUBE_API_BASE_URL || '').replace(/\/$/, '');
 
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatPrice = (value) => brl.format(value);
@@ -25,7 +26,10 @@ function esc(value) {
 
 // Chamada à API com tratamento de erro padronizado
 async function api(path, options = {}) {
-  const response = await fetch(`/api${path}`, options);
+  if (!API_BASE_URL) {
+    throw new Error('CUBE_API_BASE_URL nao configurada em assets/js/config.js');
+  }
+  const response = await fetch(`${API_BASE_URL}/api${path}`, options);
   if (!response.ok) {
     const error = new Error(`Erro ${response.status} em ${path}`);
     error.status = response.status;
