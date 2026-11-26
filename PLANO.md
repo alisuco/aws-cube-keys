@@ -89,6 +89,8 @@ EventBridge -> Lambda Processor -> gera chaves -> atualiza Orders -> SES (opcion
 - Comandos: `npm run build`, `npm test`, `npx cdk synth`, `npx cdk diff`, `npx cdk deploy` (com autorização).
 - Pós-deploy: copiar o domínio do Output `ProductsApiUrl` para `frontend/assets/js/config.js`, commitar e publicar `frontend/` no GitHub Pages.
 - Verificação final: URL do Pages abre, catálogo carrega, pedido completa, chaves aparecem, README e diagrama fazem sentido.
+- Correção aplicada após o segundo deploy: o `CustomResource` do CloudFormation entrega propriedades como string, então `Products` agora é enviado como `JSON.stringify(products)` e o handler converte `id` com `Number()` antes do `BatchWriteItem`. Isso evita `ValidationException: The provided key element does not match the schema` na tabela com chave numérica.
+- O stack ficou novamente em `ROLLBACK_COMPLETE` apos essa falha; precisa ser excluido antes da proxima tentativa.
 
 ## Checklist final do desafio
 - [x] Repositório GitHub com o código-fonte.
