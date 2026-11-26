@@ -83,7 +83,9 @@ export class InfraStack extends cdk.Stack {
       serviceToken: seedProvider.serviceToken,
       properties: {
         TableName: productsTable.tableName,
-        Products: products,
+        // CloudFormation converte valores de custom resource para string:
+        // enviar o JSON como texto preserva os numeros (id da chave da tabela).
+        Products: JSON.stringify(products),
       },
     });
 

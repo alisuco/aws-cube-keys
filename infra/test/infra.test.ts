@@ -37,12 +37,10 @@ describe('InfraStack — catalogo', () => {
     });
   });
 
-  test('semeia a tabela com o catalogo do products.json', () => {
+  test('semeia a tabela com o catalogo do products.json como JSON string', () => {
     template.hasResourceProperties('AWS::CloudFormation::CustomResource', {
       TableName: Match.anyValue(),
-      Products: Match.arrayWith([
-        Match.objectLike({ id: 1, title: 'Cyberpunk 2077: Phantom Liberty' }),
-      ]),
+      Products: Match.stringLikeRegexp('Cyberpunk 2077: Phantom Liberty'),
     });
   });
 

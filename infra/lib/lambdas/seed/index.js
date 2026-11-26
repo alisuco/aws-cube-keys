@@ -13,7 +13,19 @@ exports.handler = async (event) => {
   }
 
   const { TableName, Products } = event.ResourceProperties;
-  const products = Array.isArray(Products) ? Products : [];
+  // O CloudFormation entrega propriedades de custom resource como string.
+  let parsed = Products;
+  if (typeof parsed === 'string') {
+    parsed = JSON.parse(parsed);
+  }
+  const products = (Array.isArray(parsed) ? parsed : []).map((product) => ({
+    ...product,
+    // A tabela Products tem chave numerica; garante o tipo mesmo se vier como texto.
+    id: Number(product.id),
+  }));
+  console.log(
+    `Seed: ${products.length} produtos, tipo do primeiro id = ${typeof products[0]?.id}`,
+  );
 
   // BatchWriteItem aceita ate 25 itens por chamada.
   for (let i = 0; i < products.length; i += 25) {
