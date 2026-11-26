@@ -1,9 +1,6 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib/core';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
@@ -14,43 +11,14 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 
+// Origem do front: GitHub Pages (projeto alisuco/aws-cube-keys).
+const GITHUB_PAGES_ORIGIN = 'https://alisuco.github.io';
+
 export class InfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // O front é servido somente pelo CloudFront: o bucket fica sempre privado.
-    const websiteBucket = new s3.Bucket(this, 'WebsiteBucket', {
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.S3_MANAGED,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    });
-
-    const deployment = new s3deploy.BucketDeployment(this, 'DeployWebsite', {
-      sources: [
-        s3deploy.Source.asset(path.join(__dirname, '..', '..', 'frontend'), {
-          // O video explicativo e grande e nao faz parte do site publicado.
-          exclude: ['assets/video/**'],
-        }),
-      ],
-      destinationBucket: websiteBucket,
-    });
-
-    // OAC é criado automaticamente e recebe permissão de leitura no bucket.
-    const distribution = new cloudfront.Distribution(this, 'Distribution', {
-      defaultBehavior: {
-        origin: origins.S3BucketOrigin.withOriginAccessControl(websiteBucket),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-      },
-      defaultRootObject: 'index.html',
-    });
-
-    new cdk.CfnOutput(this, 'CloudFrontUrl', {
-      value: `https://${distribution.distributionDomainName}`,
-      description: 'URL publica da loja Cube Keys',
-    });
-
-    // ----- Etapa 3: catalogo -----
+    // ----- Catalogo -----
     const productsTable = new dynamodb.TableV2(this, 'ProductsTable', {
       partitionKey: { name: 'id', type: dynamodb.AttributeType.NUMBER },
       billing: dynamodb.Billing.onDemand(),
@@ -66,14 +34,20 @@ export class InfraStack extends cdk.Stack {
     });
     productsTable.grantReadData(productsFn);
 
-    // Uma unica permissao de invoke cobre as duas rotas.
     const productsIntegration = new apigwv2integrations.HttpLambdaIntegration(
       'ProductsIntegration',
       productsFn,
       { scopePermissionToRoute: false },
     );
 
-    const httpApi = new apigwv2.HttpApi(this, 'HttpApi');
+    // O front esta no GitHub Pages: navegador e API estao em origens diferentes.
+    const httpApi = new apigwv2.HttpApi(this, 'HttpApi', {
+      corsPreflight: {
+        allowOrigins: [GITHUB_PAGES_ORIGIN],
+        allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST],
+        allowHeaders: ['content-type'],
+      },
+    });
     httpApi.addRoutes({
       path: '/api/products',
       methods: [apigwv2.HttpMethod.GET],
@@ -85,36 +59,40 @@ export class InfraStack extends cdk.Stack {
       integration: productsIntegration,
     });
 
-    // O seed reaproveita o products.json que o BucketDeployment ja publicou.
+    // O seed recebe o catalogo direto do products.json no sintetizador.
     const seedFn = new lambda.Function(this, 'SeedProductsFunction', {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'index.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, 'lambdas', 'seed')),
       timeout: cdk.Duration.seconds(60),
     });
-    websiteBucket.grantRead(seedFn);
     productsTable.grantWriteData(seedFn);
 
     const seedProvider = new cr.Provider(this, 'SeedProvider', {
       onEventHandler: seedFn,
     });
 
-    const seed = new cdk.CustomResource(this, 'SeedProducts', {
+    const products = JSON.parse(
+      fs.readFileSync(
+        path.join(__dirname, '..', '..', 'frontend', 'data', 'products.json'),
+        'utf8',
+      ),
+    ) as Array<Record<string, unknown>>;
+
+    new cdk.CustomResource(this, 'SeedProducts', {
       serviceToken: seedProvider.serviceToken,
       properties: {
-        BucketName: websiteBucket.bucketName,
-        ObjectKey: 'data/products.json',
         TableName: productsTable.tableName,
+        Products: products,
       },
     });
-    seed.node.addDependency(deployment);
 
     new cdk.CfnOutput(this, 'ProductsApiUrl', {
       value: `${httpApi.apiEndpoint}/api/products`,
-      description: 'URL da API de produtos (teste direto ate a Etapa 6)',
+      description: 'URL da API de produtos (copiar para assets/js/config.js)',
     });
 
-    // ----- Etapa 4: pedidos -----
+    // ----- Pedidos -----
     const ordersTable = new dynamodb.TableV2(this, 'OrdersTable', {
       partitionKey: { name: 'orderId', type: dynamodb.AttributeType.STRING },
       billing: dynamodb.Billing.onDemand(),
@@ -154,14 +132,13 @@ export class InfraStack extends cdk.Stack {
       integration: ordersIntegration,
     });
 
-    // ----- Etapa 5: processador de pedidos -----
+    // ----- Processador -----
     const processorFn = new lambda.Function(this, 'ProcessorFunction', {
       runtime: lambda.Runtime.NODEJS_24_X,
       handler: 'index.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, 'lambdas', 'processor')),
       environment: {
         ORDERS_TABLE: ordersTable.tableName,
-        // Sem remetente verificado no SES, o handler so grava as chaves no pedido.
         SENDER_EMAIL: process.env.CUBE_SENDER_EMAIL ?? '',
       },
       timeout: cdk.Duration.seconds(20),
@@ -180,17 +157,6 @@ export class InfraStack extends cdk.Stack {
         detailType: ['OrderCreated'],
       },
       targets: [new targets.LambdaFunction(processorFn, { retryAttempts: 2 })],
-    });
-
-    // ----- Etapa 6: front e API na mesma origem -----
-    // apiEndpoint vem como https://xxx.execute-api...; HttpOrigin quer o dominio.
-    const apiDomain = cdk.Fn.select(2, cdk.Fn.split('/', httpApi.apiEndpoint));
-    distribution.addBehavior('/api/*', new origins.HttpOrigin(apiDomain), {
-      allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-      originRequestPolicy:
-        cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
-      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
     });
   }
 }

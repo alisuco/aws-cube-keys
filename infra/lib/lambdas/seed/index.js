@@ -1,12 +1,10 @@
-// Custom Resource: semea Products a partir do products.json publicado no S3.
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+// Custom Resource: semea Products com o catalogo recebido no template.
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const {
   DynamoDBDocumentClient,
   BatchWriteCommand,
 } = require('@aws-sdk/lib-dynamodb');
 
-const s3 = new S3Client({});
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 exports.handler = async (event) => {
@@ -14,11 +12,8 @@ exports.handler = async (event) => {
     return { PhysicalResourceId: 'cube-keys-products-seed' };
   }
 
-  const { BucketName, ObjectKey, TableName } = event.ResourceProperties;
-  const object = await s3.send(
-    new GetObjectCommand({ Bucket: BucketName, Key: ObjectKey }),
-  );
-  const products = JSON.parse(await object.Body.transformToString());
+  const { TableName, Products } = event.ResourceProperties;
+  const products = Array.isArray(Products) ? Products : [];
 
   // BatchWriteItem aceita ate 25 itens por chamada.
   for (let i = 0; i < products.length; i += 25) {
