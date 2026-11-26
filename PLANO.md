@@ -16,7 +16,7 @@ Progresso: implementação concluída (Etapas 1 a 6, com a hospedagem migrada pa
 - `frontend/assets/js/app.js` consome `GET /api/products`, `GET /api/products/:id`, `POST /api/orders` e `GET /api/orders/:id`, montando a URL a partir de `frontend/assets/js/config.js`.
 - O carrinho fica em `localStorage['cube_keys_cart']`; o checkout envia só IDs de produtos e espera que o servidor calcule preços e chaves.
 - `frontend/data/products.json` (20 produtos) é lido no `cdk synth` e passado ao `CustomResource` de seed, que grava no DynamoDB.
-- `frontend/assets/video/video-explicativo.mp4` (~36 MB) **está no repositório** desde o primeiro commit. Com GitHub Pages, ele fica acessível publicamente em `assets/video/video-explicativo.mp4`; decidir removê-lo ainda está em aberto.
+- `frontend/assets/video/video-explicativo.mp4` (~36 MB) **está no repositório** desde o primeiro commit. Com GitHub Pages, ele fica acessível publicamente em `assets/video/video-explicativo.mp4` — decisão do usuário: manter o vídeo publicado.
 - O deploy inicial com CloudFront/OAC falhou: uma SCP da Organizations (`p-cwpx03lm`) nega `cloudfront:CreateOriginAccessControl`. A migração para GitHub Pages removeu S3/CloudFront/OAC do stack, contornando esse bloqueio. O stack em `ROLLBACK_COMPLETE` precisa ser excluído antes de um novo deploy.
 
 ## Arquitetura alvo

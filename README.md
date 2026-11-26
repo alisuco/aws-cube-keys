@@ -56,6 +56,7 @@ O `POST /api/orders` recebe apenas os IDs dos produtos. Preços e chaves são de
 
 - `frontend/` — site estático em HTML, CSS e JavaScript puro; publicado pelo GitHub Pages.
 - `frontend/assets/js/config.js` — URL base da API; preencher após o deploy.
+- `frontend/assets/video/video-explicativo.mp4` — vídeo explicativo, publicado junto com o site no GitHub Pages.
 - `frontend/data/products.json` — catálogo usado como semente do DynamoDB.
 - `infra/` — aplicação AWS CDK em TypeScript; único projeto npm do repositório.
 - `infra/lib/lambdas/` — handlers das Lambdas (products, orders, processor, seed).
