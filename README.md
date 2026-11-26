@@ -55,7 +55,7 @@ O `POST /api/orders` recebe apenas os IDs dos produtos. Preços e chaves são de
 ## Estrutura do repositório
 
 - `frontend/` — site estático em HTML, CSS e JavaScript puro; publicado pelo GitHub Pages.
-- `frontend/assets/js/config.js` — URL base da API; preencher após o deploy.
+- `frontend/assets/js/config.js` — URL base da API, já preenchida com o endpoint implantado.
 - `frontend/assets/video/video-explicativo.mp4` — vídeo explicativo, publicado junto com o site no GitHub Pages.
 - `frontend/data/products.json` — catálogo usado como semente do DynamoDB.
 - `infra/` — aplicação AWS CDK em TypeScript; único projeto npm do repositório.
@@ -68,7 +68,7 @@ O `POST /api/orders` recebe apenas os IDs dos produtos. Preços e chaves são de
 - Node.js e npm.
 - AWS CLI autenticada (`aws login`) com a conta/região de deploy.
 - Ambiente AWS com CDK bootstrap feito.
-- GitHub Pages habilitado no repositório, servindo a pasta `frontend/` (por exemplo, via branch `gh-pages` ou GitHub Actions).
+- GitHub Pages habilitado no repositório com **Source = GitHub Actions**. O workflow `.github/workflows/deploy-pages.yml` publica o conteúdo de `frontend/` a cada push em `main` que tocar nessa pasta.
 - Para envio real de e-mail: endereço verificado no SES, especialmente enquanto a conta estiver no sandbox.
 
 ## Como executar e implantar
@@ -86,13 +86,13 @@ npx cdk deploy
 
 `npm run build` apenas type-checka o projeto (`tsconfig.json` usa `noEmit`). O `cdk.json` já executa `npx tsc && npx tsx bin/infra.ts`, então os comandos do CDK também type-checkam antes de sintetizar.
 
-Após o deploy, copie o domínio do Output `ProductsApiUrl` (sem o sufixo `/api/products`) para `frontend/assets/js/config.js`:
+Após o deploy, copie o domínio do Output `ProductsApiUrl` (sem o sufixo `/api/products`) para `frontend/assets/js/config.js`. No deploy atual o valor já está preenchido:
 
 ```js
-window.CUBE_API_BASE_URL = 'https://xxx.execute-api.us-east-1.amazonaws.com';
+window.CUBE_API_BASE_URL = 'https://c6v6pgmlu0.execute-api.us-east-1.amazonaws.com';
 ```
 
-Depois commite esse arquivo e publique o `frontend/` no GitHub Pages. A URL pública da loja será `https://alisuco.github.io/aws-cube-keys/`.
+Para publicar o front, configure em **Settings → Pages → Build and deployment → Source: GitHub Actions** e faça push para `main`. O workflow publica `frontend/` e a URL da loja passa a ser `https://alisuco.github.io/aws-cube-keys/`.
 
 `npx cdk deploy` altera uma conta AWS real e exige autorização explícita antes de ser executado.
 
