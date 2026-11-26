@@ -120,3 +120,28 @@ describe('InfraStack — pedidos', () => {
     });
   });
 });
+
+describe('InfraStack — processador', () => {
+  const app = new cdk.App();
+  const stack = new InfraStack(app, 'ProcessorTestStack');
+  const template = Template.fromStack(stack);
+
+  test('cria regra que filtra OrderCreated', () => {
+    template.hasResourceProperties('AWS::Events::Rule', {
+      EventPattern: {
+        source: ['cube.orders'],
+        'detail-type': ['OrderCreated'],
+      },
+    });
+  });
+
+  test('concede permissao para enviar e-mail pelo SES', () => {
+    template.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: Match.objectLike({
+        Statement: Match.arrayWith([
+          Match.objectLike({ Action: 'ses:SendEmail' }),
+        ]),
+      }),
+    });
+  });
+});

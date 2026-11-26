@@ -9,6 +9,8 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as apigwv2integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 
@@ -150,6 +152,34 @@ export class InfraStack extends cdk.Stack {
       path: '/api/orders/{orderId}',
       methods: [apigwv2.HttpMethod.GET],
       integration: ordersIntegration,
+    });
+
+    // ----- Etapa 5: processador de pedidos -----
+    const processorFn = new lambda.Function(this, 'ProcessorFunction', {
+      runtime: lambda.Runtime.NODEJS_24_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, 'lambdas', 'processor')),
+      environment: {
+        ORDERS_TABLE: ordersTable.tableName,
+        // Sem remetente verificado no SES, o handler so grava as chaves no pedido.
+        SENDER_EMAIL: process.env.CUBE_SENDER_EMAIL ?? '',
+      },
+      timeout: cdk.Duration.seconds(20),
+    });
+    ordersTable.grantReadWriteData(processorFn);
+    processorFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ses:SendEmail'],
+        resources: ['*'],
+      }),
+    );
+
+    new events.Rule(this, 'OrderCreatedRule', {
+      eventPattern: {
+        source: ['cube.orders'],
+        detailType: ['OrderCreated'],
+      },
+      targets: [new targets.LambdaFunction(processorFn, { retryAttempts: 2 })],
     });
   }
 }
